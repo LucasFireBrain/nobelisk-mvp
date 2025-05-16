@@ -8,26 +8,62 @@ class MainScene extends Phaser.Scene {
   }
 
   create() {
-    // Show Phaser version
-    this.add.text(10, 10, 'Phaser v' + Phaser.VERSION, {
-      font: '16px monospace',
-      fill: '#000'
-    });
+    // sky background
+    this.cameras.main.setBackgroundColor('#87CEEB');
 
-    // 1) Draw “houses” behind
-    const shapes = this.add.graphics();
-    shapes.fillStyle(0x666666, 1).fillRect(500, 280, 60, 80); // grey house
+    // —— BUILDINGS (behind NPCs) ——
+    const buildG = this.add.graphics();
+    buildG.lineStyle(2, 0x000000, 1);
 
-    // 2) Draw “townsfolk” in front of houses
-    shapes.fillStyle(0xff0000, 1).fillCircle(200, 350, 20);               // red person
-    shapes.fillStyle(0x00ff00, 1).fillTriangle(300, 370, 330, 320, 360, 370); // green person
+    // Blacksmith shop
+    buildG.fillStyle(0x8B4513, 1)
+          .fillRect(150, 280, 120, 60)
+          .strokeRect(150, 280, 120, 60);
 
-    // 3) Create player **after** shapes, so it’s on top
-    //    and drop Y so it walks “in front” of them
+    // Inn
+    buildG.fillStyle(0xFFD700, 1)
+          .fillRect(560, 280, 120, 60)
+          .strokeRect(560, 280, 120, 60);
+
+    // Fast-Travel Terminal
+    buildG.fillStyle(0x888888, 1)
+          .fillRect(700, 100, 50, 80)
+          .strokeRect(700, 100, 50, 80);
+
+    // —— NPCs (in front of buildings) ——
+    const npcG = this.add.graphics();
+
+    // Blacksmith NPC
+    npcG.fillStyle(0x888888, 1)
+        .fillRect(200, 350, 20, 20)
+        .fillStyle(0xCCCCCC, 1)
+        .fillCircle(210, 340, 10);
+
+    // Hidden Stranger NPC
+    npcG.fillStyle(0x888888, 1)
+        .fillRect(400, 350, 20, 20)
+        .fillStyle(0xFF00FF, 1)
+        .fillCircle(410, 340, 10);
+
+    // Innkeeper NPC
+    npcG.fillStyle(0x888888, 1)
+        .fillRect(600, 350, 20, 20)
+        .fillStyle(0xFFFF00, 1)
+        .fillCircle(610, 340, 10);
+
+    // —— PLAYER (on top layer, Y lowered to walk in front) ——
     this.player = this.add.rectangle(100, 420, 32, 32, 0xffffff);
 
-    // 4) Only horizontal input
+    // —— INPUT (horizontal only) ——
     this.cursors = this.input.keyboard.createCursorKeys();
+
+    // —— VERSION TEXT (always on top) ——
+    this.add
+      .text(10, 10, 'Phaser v' + Phaser.VERSION, {
+        font: '16px monospace',
+        fill: '#000'
+      })
+      .setDepth(1000);
   }
 
   update(_, delta) {
@@ -37,7 +73,7 @@ class MainScene extends Phaser.Scene {
     } else if (this.cursors.right.isDown) {
       this.player.x += speed * (delta / 1000);
     }
-    // clamp X to screen bounds
+    // constrain to screen
     this.player.x = Phaser.Math.Clamp(this.player.x, 16, GAME_WIDTH - 16);
   }
 }
