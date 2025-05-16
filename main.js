@@ -7,39 +7,37 @@ class MainScene extends Phaser.Scene {
     super({ key: 'MainScene' });
   }
 
-  preload() {
-    // nothing to load here
-  }
-
   create() {
-    // 1) Show version
+    // Show Phaser version
     this.add.text(10, 10, 'Phaser v' + Phaser.VERSION, {
       font: '16px monospace',
       fill: '#000'
     });
 
-    // 2) Draw static shapes
+    // 1) Draw “houses” behind
     const shapes = this.add.graphics();
-    shapes.fillStyle(0xff0000, 1).fillCircle(200, 300, 20);               // Red circle
-    shapes.fillStyle(0x00ff00, 1).fillTriangle(300, 350, 350, 250, 400, 350); // Green triangle
-    shapes.fillStyle(0x0000ff, 1).fillRect(500, 300, 40, 40);            // Blue rectangle
+    shapes.fillStyle(0x666666, 1).fillRect(500, 280, 60, 80); // grey house
 
-    // 3) Create player as a white square
-    this.player = this.add.rectangle(100, 300, 32, 32, 0xffffff);
+    // 2) Draw “townsfolk” in front of houses
+    shapes.fillStyle(0xff0000, 1).fillCircle(200, 350, 20);               // red person
+    shapes.fillStyle(0x00ff00, 1).fillTriangle(300, 370, 330, 320, 360, 370); // green person
 
-    // 4) Input
+    // 3) Create player **after** shapes, so it’s on top
+    //    and drop Y so it walks “in front” of them
+    this.player = this.add.rectangle(100, 420, 32, 32, 0xffffff);
+
+    // 4) Only horizontal input
     this.cursors = this.input.keyboard.createCursorKeys();
   }
 
-  update(time, delta) {
-    const speed = 200; // px/sec
-    // move left/right
+  update(_, delta) {
+    const speed = 200;
     if (this.cursors.left.isDown) {
       this.player.x -= speed * (delta / 1000);
     } else if (this.cursors.right.isDown) {
       this.player.x += speed * (delta / 1000);
     }
-    // clamp within screen
+    // clamp X to screen bounds
     this.player.x = Phaser.Math.Clamp(this.player.x, 16, GAME_WIDTH - 16);
   }
 }
