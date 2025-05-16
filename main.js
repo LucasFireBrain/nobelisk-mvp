@@ -1,3 +1,4 @@
+// main.js
 // ------------------------------------------------------------
 // CONFIG & GLOBAL STATE
 // ------------------------------------------------------------
@@ -24,11 +25,8 @@ let playerState = {
 // ------------------------------------------------------------
 function createHeliumSprite(scene, x, y) {
   const g = scene.add.graphics();
-  // torso
   g.fillStyle(0xADD8E6, 1).fillRect(x, y + 16, 16, 16);
-  // head
   g.fillStyle(0xFFFFFF, 1).fillCircle(x + 8, y, 8);
-  // eyes
   g.fillStyle(0x000000, 1)
    .fillCircle(x + 5, y - 2, 1)
    .fillCircle(x + 11, y - 2, 1);
@@ -37,11 +35,8 @@ function createHeliumSprite(scene, x, y) {
 
 function createNPC(scene, x, y, headColor = 0xFF0000) {
   const g = scene.add.graphics();
-  // body
   g.fillStyle(0x888888, 1).fillRect(x, y + 12, 20, 20);
-  // head
   g.fillStyle(headColor, 1).fillCircle(x + 10, y + 4, 10);
-  // eyes
   g.fillStyle(0x000000, 1)
    .fillCircle(x + 6, y + 2, 1)
    .fillCircle(x + 14, y + 2, 1);
@@ -59,9 +54,7 @@ function createBuilding(scene, x, y, width, height) {
 
 function createTree(scene, x, y) {
   const g = scene.add.graphics();
-  // trunk
   g.fillStyle(0x8B4513, 1).fillRect(x + 12, y + 24, 8, 16);
-  // foliage
   g.fillStyle(0x228B22, 1).fillTriangle(x, y + 24, x + 32, y + 24, x + 16, y);
   return g;
 }
@@ -81,22 +74,31 @@ class BaseScene extends Phaser.Scene {
   }
 
   preload() {
-    // TODO: load assets here
+    // TODO: load assets
   }
 
   create() {
     this.cameras.main.setBackgroundColor('#87CEEB');
-    this.player = this.physics.add.sprite(100, 300);
-    this.player.setCollideWorldBounds(true);
-    this.cursors = this.input.keyboard.createCursorKeys();
-    this.keyI = this.input.keyboard.addKey('I');
 
-    this.keyI.on('down', () => {
-      console.log('Open Notebook UI', notebookData);
-      // TODO: show notebook overlay
+    // debug keyboard input
+    this.input.keyboard.on('keydown', ev => {
+      console.log('Key pressed:', ev.code);
     });
 
-    this.player.body.setSize(16, 32);
+    // visible player rectangle
+    const rect = this.add.rectangle(100, 300, 16, 32, 0xffffff);
+    this.physics.add.existing(rect);
+    rect.body.setCollideWorldBounds(true);
+    this.player = rect;
+
+    this.cursors = this.input.keyboard.createCursorKeys();
+    this.keyI    = this.input.keyboard.addKey('I');
+    this.keyI.on('down', () => {
+      console.log('Open Notebook UI', notebookData);
+    });
+
+    // ensure world bounds match game size
+    this.physics.world.setBounds(0, 0, GAME_WIDTH, GAME_HEIGHT);
     this.player.body.onWorldBounds = true;
     this.physics.world.on('worldbounds', body => {
       if (body.gameObject === this.player) {
@@ -112,16 +114,16 @@ class BaseScene extends Phaser.Scene {
 
   update() {
     const spd = 150;
-    this.player.setVelocity(0);
-    if (this.cursors.left.isDown)  this.player.setVelocityX(-spd);
-    if (this.cursors.right.isDown) this.player.setVelocityX(spd);
-    if (this.cursors.up.isDown)    this.player.setVelocityY(-spd);
-    if (this.cursors.down.isDown)  this.player.setVelocityY(spd);
+    this.player.body.setVelocity(0);
+    if (this.cursors.left.isDown)  this.player.body.setVelocityX(-spd);
+    if (this.cursors.right.isDown) this.player.body.setVelocityX(spd);
+    if (this.cursors.up.isDown)    this.player.body.setVelocityY(-spd);
+    if (this.cursors.down.isDown)  this.player.body.setVelocityY(spd);
   }
 }
 
 // ------------------------------------------------------------
-// SCENES
+// TOWN & FOREST SCENES
 // ------------------------------------------------------------
 class TownA extends BaseScene {
   constructor() { super('TownA'); }
@@ -129,10 +131,11 @@ class TownA extends BaseScene {
     super.create();
     this.prevScene = null;
     this.nextScene = 'Forest1';
+
     createNPC(this, 200, 300, 0xAAAAAA); // Blacksmith
     createNPC(this, 400, 300, 0xFF00FF); // HiddenStranger
     createNPC(this, 600, 300, 0xFFFF00); // Innkeeper
-    createBuilding(this, 700, 100, 50, 80); // Terminal
+    createBuilding(this, 700, 100, 50, 80); // FastTravelTerminal
     // TODO: overlap callbacks
   }
 }
@@ -143,10 +146,12 @@ class Forest1 extends BaseScene {
     super.create();
     this.prevScene = 'TownA';
     this.nextScene = 'TownB';
+
     createTree(this, 100, 200);
     createTree(this, 200, 250);
+
     this.combatZone = new Phaser.Geom.Rectangle(300, 200, 200, 200);
-    this.inCombat = false;
+    this.inCombat   = false;
   }
 
   update(time, delta) {
@@ -158,7 +163,7 @@ class Forest1 extends BaseScene {
 
   startCombat() {
     this.inCombat = true;
-    // TODO: spawn waves
+    // TODO: spawn waves of createEnemy
   }
 }
 
@@ -168,7 +173,7 @@ class TownB extends BaseScene {
     super.create();
     this.prevScene = 'Forest1';
     this.nextScene = 'Forest2';
-    // TODO: mirror TownA
+    // TODO: populate with NPCs/buildings
   }
 }
 
@@ -178,7 +183,7 @@ class Forest2 extends BaseScene {
     super.create();
     this.prevScene = 'TownB';
     this.nextScene = null;
-    // TODO: mirror Forest1
+    // TODO: trees & combat zone
   }
 }
 
@@ -200,11 +205,10 @@ const config = {
 new Phaser.Game(config);
 
 // ------------------------------------------------------------
-// NEXT MODULES TO TACKLE (TODO)
+// NEXT STEPS (TODOs)
 // ------------------------------------------------------------
-// - NPC interactions (quiz, repair, respawn, fast-travel)
-// - Combat attacks & knockback
-// - spawnDrop & collect logic
-// - Notebook “Purify” context-menu
-// - Durability, death/respawn, essence economy
-// - Quick-use belt & healingPotion
+// - NPC interactions (quiz, repair, respawn, travel)
+// - Combat attacks, spawnDrop(), drops & notebook UI
+// - Durability & death/respawn logic
+// - Quick-use belt & HealingPotion
+// - Context menu “Purify” and essence economy
